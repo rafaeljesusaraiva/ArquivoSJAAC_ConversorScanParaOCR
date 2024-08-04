@@ -1,8 +1,10 @@
 import tkinter as tk
-import modules.importConfigs as appConfig
+import modules.importConfigs
 import modules.windows.showAbout as showAbout
+import modules.windows.showConfig as showConfig
+
 # Import configurations from importConfigs.py
-appConfig.initialize()
+appConfig = modules.importConfigs.ImportConfigs()
 
 # Create a tkinter window
 window = tk.Tk()
@@ -30,7 +32,7 @@ ficheiro_menu.add_command(label="Sair", command=window.quit)
 extras_menu = tk.Menu(menu_bar, tearoff=0)
 menu_bar.add_cascade(label="Opções", menu=extras_menu)
     
-extras_menu.add_command(label="Configuração")
+extras_menu.add_command(label="Configuração", command=showConfig.ShowConfig(window).show)
 extras_menu.add_command(label="Sobre a aplicação", command=showAbout.AboutWindow(window).show)
 
 # Create a label widget to display the configurations

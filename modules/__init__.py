@@ -1,1 +1,1 @@
-__all__ = ['importConfigs', 'windows']
+__all__ = ['ImportConfigs', 'windows']

@@ -1,1 +1,1 @@
-__all__ = ["showAbout"]
+__all__ = ["showAbout", "showConfig"]

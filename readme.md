@@ -17,3 +17,11 @@ A FAZER
  - Opção de janela com consola de logs
  - Implementar sinais e eventos para transmissão de dados entre widgets
  - Multithreading em pyqt6 ???
+
+ ## Pesquisa
+
+ ### Multithreads & Multiprocessing
+
+ https://medium.com/codex/an-introduction-to-multiprocessing-using-python-165f51f83c0d
+
+ 

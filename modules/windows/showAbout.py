@@ -1,9 +1,15 @@
 from os import path
 import tkinter as tk
 from PIL import Image, ImageTk
+import webbrowser
 
 logoPath = path.join(path.dirname(path.abspath(__file__)), '..', '..', 'gui', 'logoIcons', '256x256.png')
-textAboutApp = """ola 123"""
+textAboutApp = """
+Aplicação desenvolvida no âmbito do projeto do arquivo digital do Arquivo da SJ/AAC, para otimizar o processo de conversão de documentos digitalizados em PDFs com texto pesquisável (OCR).
+"""
+
+def callbackRepo(e):
+    webbrowser.open_new("https://github.com/rafaeljesusaraiva/ArquivoSJAAC_ConversorScanParaOCR")
 
 class AboutWindow:
     def __init__(self, root):
@@ -49,17 +55,15 @@ class AboutWindow:
             image_label.pack(pady=10, fill="x")  # fill horizontally
 
             # create a text label with lorem ipsum text
-            introText_label = tk.Label(frame, text=textAboutApp, wraplength=300, justify="left")
+            introText_label = tk.Label(frame, text=textAboutApp, wraplength=300)
             introText_label.pack(pady=10, fill="x")  # fill horizontally
 
-            repositoryTitle_label = tk.Label(frame, text="Repositório GitHub")
+            repositoryTitle_label = tk.Label(frame, text="Repositório GitHub", fg="blue", cursor="hand2")
             repositoryTitle_label.pack(pady=10, fill="x")  # fill horizontally
-
-            repository_label = tk.Label(frame, text="url", wraplength=300, justify="left")
-            repository_label.pack(pady=10, fill="x")  # fill horizontally
+            repositoryTitle_label.bind("<Button-1>", callbackRepo)
 
             # create an exit button
-            exit_button = tk.Button(frame, text="Exit", command=self.about_window.destroy)
+            exit_button = tk.Button(frame, text="Fechar", command=self.about_window.destroy)
             exit_button.pack(pady=10, fill="x")  # fill horizontally
 
             # update the window size
