@@ -1,0 +1,1 @@
+package ArquivoSJAAC_ConversorScanParaOCR
