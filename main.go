@@ -5,6 +5,7 @@ import (
 	"github.com/gopxl/beep/v2"
 	"github.com/gopxl/beep/v2/mp3"
 	"github.com/gopxl/beep/v2/speaker"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"log"
 	"os"
 	"time"
@@ -101,4 +102,19 @@ func (a *App) ChimeEndTask() {
 		done <- true
 	})))
 	<-done
+}
+
+/* function that opens system dialog and returns folder path selected */
+func (a *App) OpenDialog(dialogTitle string) string {
+	dialogOptions := runtime.OpenDialogOptions{
+		Title: dialogTitle,
+	}
+	directory, _ := runtime.OpenDirectoryDialog(a.ctx, dialogOptions)
+
+	/* check if error */
+	if directory == "" {
+		return ""
+	}
+
+	return directory
 }
