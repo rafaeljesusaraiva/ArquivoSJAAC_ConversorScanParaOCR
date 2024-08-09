@@ -13,13 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'ConversorScanParaOCR_linux'
+          - name: 'ConversorScanParaOCR'
             platform:  'linux/amd64'
             os: 'ubuntu-latest'
-          - name: 'ConversorScanParaOCR_windows'
+          - name: 'ConversorScanParaOCR'
             platform:  'windows/amd64'
             os: 'windows-latest'
-          - name: 'ConversorScanParaOCR_mac'
+          - name: 'ConversorScanParaOCR'
             platform:  'darwin/universal'
             os: 'macos-latest'
 
@@ -29,6 +29,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+
+      - name: Install Ubuntu Dependecies
+        if: matrix.build.os == 'ubuntu-latest'
+        run: |
+          apt install libasound2-dev
 
       - name: Build wails
         uses: dAppServer/wails-build-action@v2.2
