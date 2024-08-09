@@ -1,10 +1,6 @@
 name: Wails build
 
-on:
-  push:
-    tags:
-    # Match any new tag
-      - '*'
+on: [push, pull_request]
 
 env:
   # Necessary for most environments as build failure can occur due to OOM issues
@@ -17,13 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'App'
+          - name: 'ConversorScanParaOCR_linux'
             platform:  'linux/amd64'
             os: 'ubuntu-latest'
-          - name: 'App'
+          - name: 'ConversorScanParaOCR_windows'
             platform:  'windows/amd64'
             os: 'windows-latest'
-          - name: 'App'
+          - name: 'ConversorScanParaOCR_mac'
             platform:  'darwin/universal'
             os: 'macos-latest'
 
