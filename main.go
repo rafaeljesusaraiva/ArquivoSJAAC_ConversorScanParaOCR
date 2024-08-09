@@ -2,20 +2,13 @@ package main
 
 import (
 	"embed"
-	"github.com/gopxl/beep/v2"
-	"github.com/gopxl/beep/v2/mp3"
-	"github.com/gopxl/beep/v2/speaker"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"log"
-	"os"
-	"time"
-
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"log"
 )
 
 //go:embed all:frontend/dist
@@ -82,39 +75,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func (a *App) ChimeEndTask() {
-	f, err := os.Open("audio/completedAudio.mp3")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	streamer, format, err := mp3.Decode(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer streamer.Close()
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-
-	done := make(chan bool)
-	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-		done <- true
-	})))
-	<-done
-}
-
-/* function that opens system dialog and returns folder path selected */
-func (a *App) OpenDialog(dialogTitle string) string {
-	dialogOptions := runtime.OpenDialogOptions{
-		Title: dialogTitle,
-	}
-	directory, _ := runtime.OpenDirectoryDialog(a.ctx, dialogOptions)
-
-	/* check if error */
-	if directory == "" {
-		return ""
-	}
-
-	return directory
 }

@@ -9,44 +9,55 @@ import {Label} from "@/components/ui/label"
 import {Input} from "@/components/ui/input"
 import {Button} from "@/components/ui/button"
 
-import React from "react"
+import React, {useEffect} from "react"
 import {Progress} from "@/components/ui/progress"
 
 import JSConfetti from 'js-confetti'
 import logoSJAAC from "@/assets/SJAAC-logo.jpg";
 
-import {ChimeEndTask, OpenDialog} from "../wailsjs/go/main/App";
+import {ChimeEndTask, GetTaskProgress, GetTotalProgress, OpenDialog, ProcessBegin} from "../wailsjs/go/main/App";
 
+function blowConfetti() {
+    const confetti = new JSConfetti()
+    confetti.addConfetti({
+        emojis: ['🖨️', '🖥️', '🎞️', '💾', '📼'],
+        emojiSize: 90,
+        confettiNumber: 20,
+    })
+    confetti.addConfetti()
+}
 
 function App() {
-    const [progress, _] = React.useState(13)
+    const [progressMain, setProgressMain] = React.useState(0)
+    const [progressTask, setProgressTask] = React.useState(0)
 
     const [checkOne, setCheckOne] = React.useState(false)
     const [inputFolderDirectory, setInputFolderDirectory] = React.useState("")
 
-    const [checkFolderMultipleDocuments, setCheckFolderMultipleDocuments] = React.useState(0)
+    const [checkFolderMultipleDocuments, setCheckFolderMultipleDocuments] = React.useState(false)
     const flipCheckFolderMultipleDocuments = () =>
-        setCheckFolderMultipleDocuments(checkFolderMultipleDocuments === 0 ? 1 : 0)
+        setCheckFolderMultipleDocuments(!checkFolderMultipleDocuments)
 
     const [checkTwo, setCheckTwo] = React.useState(false)
     const [inputFolderDirectoryTwo, setInputFolderDirectoryTwo] = React.useState("")
 
-    const [check]
+    const [checkNoPdfWithoutOcr, setCheckNoPdfWithoutOcr] = React.useState(false)
+    const flipCheckNoPdfWithoutOcr = () =>
+        setCheckNoPdfWithoutOcr(!checkNoPdfWithoutOcr)
+    const [chimeOnFinish, setChimeOnFinish] = React.useState(false)
+    const flipChimeOnFinish = () =>
+        setChimeOnFinish(!chimeOnFinish)
+
+    const isOcrRunning = React.useRef(false)
 
     const [spooked, setSpooked] = React.useState(false);
     const partyArquivo = () => {
         setSpooked(true);
         setTimeout(() => setSpooked(false), 1000); // reset spooked state after 1s
-        const confetti = new JSConfetti()
-        confetti.addConfetti({
-            emojis: ['🖨️', '🖥️', '🎞️', '💾', '📼'],
-            emojiSize: 90,
-            confettiNumber: 20,
-        })
-        confetti.addConfetti()
+        blowConfetti()
     }
 
-    const internalOpenDialog = async () => {
+    const firstOpenDialog = async () => {
         try {
             var directory = await OpenDialog("Escolher pasta")
 
@@ -62,6 +73,43 @@ function App() {
         }
     }
 
+    const secondOpenDialog = async () => {
+        try {
+            var directory = await OpenDialog("Escolher pasta")
+
+            if (directory !== "") {
+                setCheckTwo(true)
+                setInputFolderDirectoryTwo(directory)
+            } else {
+                setCheckTwo(false)
+                setInputFolderDirectoryTwo("Exemplo: C:/Users/Arquivo/...")
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const startProcess = async () => {
+        try {
+            await ProcessBegin(inputFolderDirectory, inputFolderDirectoryTwo, checkFolderMultipleDocuments, checkNoPdfWithoutOcr)
+            ChimeEndTask()
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            const taskProgress = await GetTaskProgress();
+            const mainProgress = await GetTotalProgress();
+            setProgressTask(taskProgress);
+            setProgressMain(mainProgress);
+        }, 500);
+
+        // Clearing the interval
+        return () => clearInterval(interval);
+    }, [progressTask, progressMain]);
+
     return (
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
             <Head/>
@@ -71,18 +119,17 @@ function App() {
                 <StepSection title={"1º Passo - Escolher pasta com scans do documento"} minimal={true}>
                     {/* First UI Line with elements*/}
                     <div className={"grid grid-cols-12 items-center gap-2"}>
-                        <Checkbox checked={checkOne} disabled={true} name={"inputFolderCheck"}
+                        <Checkbox checked={checkOne} disabled={true}
                                   className={"col-span-1 scale-150 mx-auto"}/>
                         <Input name={"showInputFolderLocation"} value={inputFolderDirectory} disabled={true}
                                className={"col-span-8"}/>
-                        <Button className={"col-span-3 text-center"} onClick={internalOpenDialog}>Escolher
+                        <Button className={"col-span-3 text-center"} onClick={firstOpenDialog}>Escolher
                             Pasta</Button>
                     </div>
                     {/* Second UI Line */}
                     <div className={"grid grid-cols-12 items-center gap-2 mt-4"}>
-                        <Checkbox name={"folderWithMultipleDocuments"} id={"check01"}
-                                  className={"col-span-1 scale-150 mx-auto"}
-                                  value={checkFolderMultipleDocuments}
+                        <Checkbox className={"col-span-1 scale-150 mx-auto"} id={"check01"}
+                                  checked={checkFolderMultipleDocuments}
                                   onClick={flipCheckFolderMultipleDocuments}/>
                         <Label htmlFor="check01" className={"col-span-8"}>
                             Pasta com vários documentos
@@ -98,20 +145,25 @@ function App() {
                 </div>
                 {/* Second Step */}
                 <StepSection title="2º Passo - Escolher pasta de destino do(s) PDF(s)">
-                    <Checkbox checked={false} disabled={true} name={"inputFolderCheck"}
+                    <Checkbox checked={checkTwo} disabled={true} name={"inputFolderCheck"}
                               className={"col-span-1 scale-150 mx-auto"}/>
-                    <Input name={"showInputFolderLocation"} disabled={true} className={"col-span-8"}/>
-                    <Button className={"col-span-3 text-center"}>Escolher Pasta</Button>
+                    <Input name={"showInputFolderLocation"} value={inputFolderDirectoryTwo} disabled={true} className={"col-span-8"}/>
+                    <Button className={"col-span-3 text-center"} onClick={secondOpenDialog}>Escolher Pasta</Button>
                 </StepSection>
                 {/* Third Step */}
                 <StepSection title={"3º Passo (opcional) - Escolher extras"}>
-                    <Checkbox name={"dontCreateNoOcrPdf"} id={"check02"}
+                    <Checkbox id={"check02"}
+                              checked={checkNoPdfWithoutOcr}
+                              onClick={flipCheckNoPdfWithoutOcr}
                               className={"col-span-1 scale-150 mx-auto"}/>
                     <Label htmlFor="check02" className={"col-span-3"}>
                         Não criar PDF sem OCR
                     </Label>
-                    <Checkbox name={"chimeOnFinish"} id={"check03"}
-                              className={"col-span-1 scale-150 mx-auto"}/>
+                    <Checkbox id={"check03"}
+                              checked={chimeOnFinish}
+                              onClick={flipChimeOnFinish}
+                              className={"col-span-1 scale-150 mx-auto"}
+                    />
                     <Label htmlFor="check03" className={"col-span-3"}>
                         Dar aviso sonoro ao terminar
                     </Label>
@@ -127,14 +179,14 @@ function App() {
                             </h2>
                         </div>
                         <div className={"col-span-full relative"}>
-                            <Progress value={progress} className={"h-6"}/>
+                            <Progress value={progressTask} className={"h-6"}/>
                             <div className={"absolute"}
                                  style={{
                                      top: "50%",
                                      left: "50%",
                                      translate: "-50% -50%",
                                      filter: "invert(1)"
-                                 }}>{progress}%
+                                 }}>{progressTask}%
                             </div>
                         </div>
                     </div>
@@ -145,21 +197,21 @@ function App() {
                             </h2>
                         </div>
                         <div className={"col-span-full relative"}>
-                            <Progress value={progress} className={"h-6"}/>
+                            <Progress value={progressMain} className={"h-6"}/>
                             <div className={"absolute"}
                                  style={{
                                      top: "50%",
                                      left: "50%",
                                      translate: "-50% -50%",
                                      filter: "invert(1)"
-                                 }}>{progress}%
+                                 }}>{progressMain}%
                             </div>
                         </div>
                     </div>
                     <div className={"grid grid-cols-5 gap-4 mt-4"}>
-                        <Button className={"col-span-3"} onClick={ChimeEndTask}>Iniciar Processo</Button>
-                        <Button className={"col-span-1"}>Pausar</Button>
-                        <Button className={"col-span-1"}>Cancelar</Button>
+                        <Button className={"col-span-3"} onClick={startProcess}>Iniciar Processo</Button>
+                        <Button className={"col-span-1"} disabled={!isOcrRunning.current}>Pausar</Button>
+                        <Button className={"col-span-1"} disabled={!isOcrRunning.current}>Cancelar</Button>
                     </div>
                 </StepSection>
             </Body>
