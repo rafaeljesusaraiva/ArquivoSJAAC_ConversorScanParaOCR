@@ -3,3 +3,8 @@ __pycache__/
 
 # Ignore Python environment folder
 python_project_archived/arquivoCabraPythonEnv/
+
+# Ignore Go project binaries and Node modules
+build/bin
+node_modules
+frontend/dist
