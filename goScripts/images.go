@@ -74,7 +74,7 @@ func ConvertDocumentPagesToJpg(documentToProcess DocumentType, temporaryFolder s
 	return documentInJPG, nil
 }
 
-func ConvertJpgsToPdf(documentToProcess DocumentType, temporaryFolder string, taskId int, taskProgress *OverallProgress) (pdfPath string, error error) {
+func ConvertJpgsToPdf(documentToProcess DocumentType, temporaryFolder string, taskId int, taskProgress *OverallProgress, simplePdf bool, outputFolder string) (pdfPath string, error error) {
 	tempDocumentFolderPath := filepath.Join(temporaryFolder, "pdfs_simple")
 	err := os.Mkdir(tempDocumentFolderPath, 0755)
 	if err != nil {
@@ -86,6 +86,11 @@ func ConvertJpgsToPdf(documentToProcess DocumentType, temporaryFolder string, ta
 
 	imp, _ := api.Import("form:A4, pos:c, s:1.0", types.POINTS)
 	api.ImportImagesFile(documentToProcess.pagesPath, documentFilePath, imp, nil)
+
+	if simplePdf {
+		simpleFilePath := filepath.Join(outputFolder, documentToProcess.documentName+"_simple.pdf")
+		api.ImportImagesFile(documentToProcess.pagesPath, simpleFilePath, imp, nil)
+	}
 
 	taskProgress.UpdateTaskProgress(taskId, 100)
 

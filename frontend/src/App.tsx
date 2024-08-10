@@ -15,7 +15,7 @@ import {Progress} from "@/components/ui/progress"
 import JSConfetti from 'js-confetti'
 import logoSJAAC from "@/assets/SJAAC-logo.jpg";
 
-import {ChimeEndTask, GetTaskProgress, GetTotalProgress, OpenDialog, ProcessBegin} from "../wailsjs/go/main/App";
+import {ChimeEndTask, IsConversionRunning, GetTaskProgress, GetTaskName, GetTotalProgress, OpenDialog, ProcessBegin, StopConversion, ToggleChime, ToggleSimplePdf} from "../wailsjs/go/main/App";
 
 function blowConfetti() {
     const confetti = new JSConfetti()
@@ -30,6 +30,8 @@ function blowConfetti() {
 function App() {
     const [progressMain, setProgressMain] = React.useState(0)
     const [progressTask, setProgressTask] = React.useState(0)
+    const [currentTaskName, setCurrentTaskName] = React.useState("")
+    const [isConversionRunning, setIsConversionRunning] = React.useState(false)
 
     const [checkOne, setCheckOne] = React.useState(false)
     const [inputFolderDirectory, setInputFolderDirectory] = React.useState("")
@@ -42,21 +44,24 @@ function App() {
     const [inputFolderDirectoryTwo, setInputFolderDirectoryTwo] = React.useState("")
 
     const [checkNoPdfWithoutOcr, setCheckNoPdfWithoutOcr] = React.useState(false)
-    const flipCheckNoPdfWithoutOcr = () =>
-        setCheckNoPdfWithoutOcr(!checkNoPdfWithoutOcr)
-    const [chimeOnFinish, setChimeOnFinish] = React.useState(false)
-    const flipChimeOnFinish = () =>
-        setChimeOnFinish(!chimeOnFinish)
+    const flipCheckNoPdfWithoutOcr = async () => {
+        let value = await ToggleSimplePdf();
+        setCheckNoPdfWithoutOcr(value)
+    }
 
-    const isOcrRunning = React.useRef(false)
+    const [chimeOnFinish, setChimeOnFinish] = React.useState(true)
+    const flipChimeOnFinish = async () => {
+        let value = await ToggleChime();
+        setChimeOnFinish(value)
+    }
 
     const [spooked, setSpooked] = React.useState(false);
     const partyArquivo = () => {
         setSpooked(true);
         setTimeout(() => setSpooked(false), 1000); // reset spooked state after 1s
         blowConfetti()
+        ChimeEndTask()
     }
-
     const firstOpenDialog = async () => {
         try {
             var directory = await OpenDialog("Escolher pasta")
@@ -72,7 +77,6 @@ function App() {
             console.error(error)
         }
     }
-
     const secondOpenDialog = async () => {
         try {
             var directory = await OpenDialog("Escolher pasta")
@@ -92,7 +96,13 @@ function App() {
     const startProcess = async () => {
         try {
             await ProcessBegin(inputFolderDirectory, inputFolderDirectoryTwo, checkFolderMultipleDocuments, checkNoPdfWithoutOcr)
-            ChimeEndTask()
+        } catch (error) {
+            console.error(error)
+        }
+    }
+    const stopProcess = async () => {
+        try {
+            await StopConversion()
         } catch (error) {
             console.error(error)
         }
@@ -100,10 +110,14 @@ function App() {
 
     useEffect(() => {
         const interval = setInterval(async () => {
-            const taskProgress = await GetTaskProgress();
-            const mainProgress = await GetTotalProgress();
+            const taskProgress = await GetTaskProgress() | 0;
+            const mainProgress = await GetTotalProgress() | 0;
+            const taskName = await GetTaskName() || "";
+            const isRunning = await IsConversionRunning() || false;
             setProgressTask(taskProgress);
             setProgressMain(mainProgress);
+            setCurrentTaskName(taskName);
+            setIsConversionRunning(isRunning);
         }, 500);
 
         // Clearing the interval
@@ -134,7 +148,7 @@ function App() {
                         <Label htmlFor="check01" className={"col-span-8"}>
                             Pasta com vários documentos
                         </Label>
-                        <Button className={"col-span-3"}>Pré-visualizar Imagens</Button>
+                        <Button className={"col-span-3 line-through text-xs"} disabled={true}>Pré-visualizar Imagens</Button>
                     </div>
                 </StepSection>
                 {/* Image Logo */}
@@ -157,7 +171,7 @@ function App() {
                               onClick={flipCheckNoPdfWithoutOcr}
                               className={"col-span-1 scale-150 mx-auto"}/>
                     <Label htmlFor="check02" className={"col-span-3"}>
-                        Não criar PDF sem OCR
+                        Criar PDF sem OCR
                     </Label>
                     <Checkbox id={"check03"}
                               checked={chimeOnFinish}
@@ -175,7 +189,7 @@ function App() {
                     <div className={"grid grid-cols-5"}>
                         <div className={"col-span-full"}>
                             <h2 className={"scroll-m-20 border-b pb-2 tracking-tight first:mt-0"}>
-                                Progresso da tarefa atual:
+                                Progresso da tarefa atual: {currentTaskName}
                             </h2>
                         </div>
                         <div className={"col-span-full relative"}>
@@ -209,9 +223,9 @@ function App() {
                         </div>
                     </div>
                     <div className={"grid grid-cols-5 gap-4 mt-4"}>
-                        <Button className={"col-span-3"} onClick={startProcess}>Iniciar Processo</Button>
-                        <Button className={"col-span-1"} disabled={!isOcrRunning.current}>Pausar</Button>
-                        <Button className={"col-span-1"} disabled={!isOcrRunning.current}>Cancelar</Button>
+                        <Button className={"col-span-3"} onClick={startProcess} disabled={isConversionRunning}>Iniciar Processo</Button>
+                        <Button className={"col-span-1"} disabled={!isConversionRunning}>Pausar</Button>
+                        <Button className={"col-span-1"} onClick={stopProcess} disabled={!isConversionRunning}>Cancelar</Button>
                     </div>
                 </StepSection>
             </Body>

@@ -8,9 +8,8 @@ type TaskProgress struct {
 
 // OverallProgress represents the overall progress of all tasks
 type OverallProgress struct {
-	Tasks         []TaskProgress // progress of each task
-	TotalProgress float64        // overall progress (0-100)
-	CurrentTask   int            // index of the current task
+	Tasks      []TaskProgress // progress of each task
+	TotalTasks int            // total number of tasks to be completed
 }
 
 // AddTask adds a new task to the overall progress
@@ -42,9 +41,18 @@ func (op *OverallProgress) CalculateTasksCompleted() int {
 	return tasksCompleted
 }
 
+// CalculateMainProgress calculates the main progress of all tasks
+func (op *OverallProgress) CalculateMainProgress() float64 {
+	totalProgress := 0.0
+	for _, task := range op.Tasks {
+		totalProgress += task.Progress
+	}
+	// Add 0 progress for remaining tasks
+	totalProgress += 0 * float64(op.TotalTasks-len(op.Tasks))
+	return (totalProgress / float64(op.TotalTasks))
+}
+
 // Reset resets the overall progress and all tasks to their initial state
 func (op *OverallProgress) Reset() {
 	op.Tasks = []TaskProgress{}
-	op.TotalProgress = 0
-	op.CurrentTask = 0
 }

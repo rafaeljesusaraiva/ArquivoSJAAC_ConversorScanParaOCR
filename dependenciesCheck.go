@@ -10,12 +10,7 @@ import (
 )
 
 func checkRuntime() string {
-	switch sysruntime.GOOS {
-	case "darwin", "linux", "windows":
-		return sysruntime.GOOS
-	default:
-		return "Unsupported platform"
-	}
+	return sysruntime.GOOS
 }
 
 func isPythonInstalled() bool {
@@ -26,7 +21,7 @@ func isPythonInstalled() bool {
 	case "windows":
 		cmd = "where python3"
 	default:
-		fmt.Printf("Unsupported platform: %s\n", sysruntime.GOOS)
+		fmt.Printf("Unsupported platform: %s\n", checkRuntime())
 		return false
 	}
 
